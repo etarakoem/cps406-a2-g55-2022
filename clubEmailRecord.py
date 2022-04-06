@@ -2,6 +2,7 @@ import textDatabase as td
 from datetime import date
 import os
 
+
 class Email:
     def __init__(self):
         self.receiver = ''
@@ -31,6 +32,22 @@ class Email:
     def getContent(self):
         return self.content
 
+    def viewMailOptions(self,userbox):
+        print(f"{'Email ID':10} | {'Email title':25} | {'From':25}")
+        for i in range(len(userbox)):
+            print(f"{i:10} | {userbox[i][3]:25} | {userbox[i][1]:25}")
+        command = input('Checking email ID: ')
+        return self.viewFullMail(userbox[int(command)])
+
+    def viewFullMail(self,mail):
+        print("=============================")
+        self.setDate(mail[0])
+        self.anEmail(mail[1],mail[2],mail[3],mail[4])
+        self.viewEmail()
+        print("=======End of Email==========")
+        enter = input("Press Enter to continue.....")
+        return
+
     def viewEmail(self):
         print("{} \nFrom: {} \nTo: {} \nTitle: {} \n\n{}".format(self.getDate(),self.getSender(),self.getReceiver(),self.getHeader(),self.stripContent()))
 
@@ -39,6 +56,9 @@ class Email:
 
     def setSender(self,sender):
         self.sender = sender
+
+    def setDate(self,date):
+        self.date = date
 
     def setReceiver(self):
         receiver = input('Receiver: ')

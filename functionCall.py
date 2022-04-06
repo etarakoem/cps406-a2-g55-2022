@@ -2,12 +2,11 @@
     author: Phuc Hua
     This is just a user interaction python file.
 """
-from account import UserAccount
-
+import account, coachClass, adminClass
 class Function(object):
 
     def createAccount(self,role):
-        acc = UserAccount()
+        acc = account.UserAccount()
         username = input("Username: ")
         if not acc.checkExist(username):
             password = input("Password: ")
@@ -23,7 +22,7 @@ class Function(object):
 
 
     def userSection(self):
-        acc = UserAccount()
+        acc = account.UserAccount()
         username = input("Username: ")
         password = input("Password: ")
         if username == "" or password == "":
@@ -33,11 +32,16 @@ class Function(object):
         if not status:
             command = input("Login again? y/N ")
             if command == 'y' or command == 'Y':
-                return self.userSection()
+                return self.menu()
             else:
                 print("Good Bye")
                 exit()
         print('Login Successfully as: ', acc.getName())
+        if acc.getRole() == 'Admin':
+            acc = adminClass.Admin()
+        elif acc.getRole() == 'Coach':
+            acc = coachClass.Coach()
+        acc.login(username,password)
         acc.summaryPage()
         acc.options()
         return True
@@ -60,7 +64,7 @@ class Function(object):
         if command == "1":
             return self.userSection()
         elif command == "2":
-            acc = UserAccount()
+            acc = account.UserAccount()
             return acc.userRegist()
         elif command == 'cl':
             self.userList('Coach')

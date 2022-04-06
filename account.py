@@ -1,5 +1,4 @@
 from clubEmailRecord import Email
-
 class UserAccount(object):
 
     def __init__(self):
@@ -61,21 +60,7 @@ class UserAccount(object):
             self.allEmail()
         elif command == "2":
             email.setSender(self.getEmail())
-            email.compose()
-        return
-
-    def coachAnnounce(self):
-        mail = Email()
-        clubList = self.viewClub(self.getUser())
-        if len(clubList) > 0:
-            print("Available receiver:")
-            for i in clubList:
-                print(i)
-            print('\n')
-            mail.compose(self.getEmail())
-        else:
-            print("You haven't declare a club yet. No club to announce \nMaybe try to regist for a club?")
-            command = input('Press Enter to continue... ')
+            email.compose(self.getEmail())
         return
 
     def viewClub(self,username):
@@ -115,7 +100,9 @@ class UserAccount(object):
         return
 
     def print_Options(self):
-        mailBox = self.fetchMail(self.getUser())
+        email = Email()
+        mailBox = email.findMailsOf('email_db', self.getEmail())
+        mail_count = len(mailBox)
         print("Menu: ")
         mail_count = len(mailBox)
         if mail_count > 0:
@@ -125,97 +112,11 @@ class UserAccount(object):
         print("2) Change email")
         print("3) Change phone number")
         print("4) Change name")
+        return mailBox,mail_count
 
-    def admin_setUser(self):
-        username = input('Which user would you like to change?')
-        if username == 'q':
-            exit(0)
-        if self.checkExist(username):
-            password = self.accountLookup(username,1)
-            self.login(username,password)
-            role = input('Changing role from '+self.getRole()+' into: ')
-            self.setRole(role)
-            self.updateAccount()
-            self.login('admin','admin')
-        else:
-            print('Username does not exist')
-            return self.admin_setUser()
-
-    def adminOptions(self):
-        mailBox = self.fetchMail(self.getName())
-        print("Menu: ")
-        print(len(mailBox))
-        mail_count = len(mailBox)
-        if mail_count > 0:
-            print("You got ", mail_count, " mail")
-            print("0) view Mailbox")
-        print("1) Lookup coach list")
-        print("2) lookup member list")
-        print("3) Change user status")
-        print("4) send an Email")
-        command = input("What would you like to do today?, Q to quit\n")
+    def quickOptions(self,command,mailBox,mail_count,email = Email()):
         if command == "0" and mail_count > 0:
-            self.viewMail(mailBox)
-        elif command == "1":
-            self.listAllMember('Coach')
-        elif command == "2":
-            self.listAllMember('Member')
-        elif command == "3":
-            self.admin_setUser()
-        elif command == "4":
-            self.sendEmail()
-        #elif command == "5":
-        #    self.enroll()
-        elif command == "q":
-            exit()
-        else:
-            print("Invalid option, please try again")
-        return self.adminOptions()
-
-
-    def coachOptions(self):
-        mailBox = self.fetchMail(self.getUser())
-        mail_count = len(mailBox)
-        self.print_Options()
-        print("5) Register a new club")
-        print("6) Make an announcement")
-        print("7) Send an email")
-        command = input("What would you like to do today? ")
-        if command == "0" and mail_count > 0:
-            self.viewMail(mailBox)
-        elif command == "1":
-            self.changePassword()
-        elif command == "2":
-            self.changeEmail()
-        elif command == "3":
-            self.changePhone()
-        elif command == "4":
-            self.changeName()
-        elif command == "5":
-            clubName = input("What would your club called? ")
-            self.addClub(clubName)
-        elif command == "6":
-            self.coachAnnounce()
-        elif command == "7":
-            self.sendEmail()
-        elif command == "q":
-            return
-        else:
-            print("Invalid option, please try again")
-            return self.coachOptions()
-        return self.coachOptions()
-
-    def memberoptions(self):
-        mailBox = self.fetchMail(self.getUser())
-        mail_count = len(mailBox)
-        self.print_Options()
-        print("5) Enroll in a club")
-        print("6) Pay")
-        print("7) View unpaid club")
-        print("")
-        command = input("What would you like to do today? ")
-        if command == "0" and mail_count > 0:
-            self.viewMail(mailBox)
+            email.viewMailOptions(mailBox)
         elif command == "1":
             self.changePassword()
         elif command == "2":
@@ -230,17 +131,19 @@ class UserAccount(object):
             return
         else:
             print("Invalid option, please try again")
-            return self.memberoptions()
-        return self.memberoptions()
+            return self.options()
+        return self.options()
 
-    def options(self):
-        role = self.getRole()
-        if role == "Member":
-            return self.memberoptions()
-        elif role == "Coach":
-            return self.coachOptions()
-        elif role == "Admin":
-            return self.adminOptions()
+    def options(self,email = Email()):
+        mailBox = self.fetchMail(self.getUser())
+        mail_count = len(mailBox)
+        self.print_Options()
+        print("5) Enroll in a club")
+        print("6) Pay")
+        print("7) View unpaid club")
+        print("")
+        command = input("What would you like to do today? ")
+
 
     def login(self,username,passwd):
         if not self.checkExist(username):
@@ -368,10 +271,18 @@ class UserAccount(object):
         self.address = address
 
     def checkExist(self, username):
-        with open("user_list", 'r') as f:
-            content = f.read()
-            if username in content:
-                return True
+        with open("account_list", 'r') as f:
+            content = f.read().split('\n')
+            for user in content:
+                section = user.split(':')
+                if self.parameterCount(user) and username == section[0]:
+                    return True
+        return False
+
+    def parameterCount(self,content):
+        parameters = content.split(':')
+        if len(parameters) == 7 and '' not in parameters:
+            return True
         return False
 
     def addToFile(self, whichFile,content):
@@ -408,24 +319,21 @@ class UserAccount(object):
         return self.phone
 
     def summaryPage(self):
+        print("==================================================")
         print("Greetings, ", self.getName(),"(",self.getRole(),")")
         print("Your email: ", self.getEmail())
         print("Your Phone number: ", self.getPhone())
         print("Your current Address: ", self.getAddress())
+        print("==================================================")
 
-    def coachAddMember(self,club):
-        with open(self.club,'r') as f:
+    def checkIfMemberInClub(self,member,club):
+        with open('clubMember','r') as f:
             lines = f.read().split('\n')
             for line in lines:
-                section = line.split(':')
-                if self.getUser() == section[1] and club == section[0]:
+                section = line.split(":")
+                if member == section[0] and club == section[1]:
                     return True
         return False
-
-    def addClub(self,club):
-        with open('club_List','a') as f:
-            f.write("\n"+club + ":" + self.getUser() + ":" + self.getName())
-        f.close()
 
     def userID_to_Type(self,username,type):
         with open('account_list','r') as f:
@@ -441,32 +349,68 @@ class UserAccount(object):
         with open(self.accountList,'r') as f:
             accounts = f.read().split("\n")
             for account in accounts:
-                if account[type] == name:
-                    return account[0]
+                section = account.split(":")
+                if name in section[type]:
+                    return section[0]
+        print(f'Unable to find {name} in any account')
 
-    def enroll(self):
+    def type_to_type(self,first,second,compare):
+        # 0 for username
+        # 2 for email
+        # 3 for name
+        return self.userID_to_Type(self.type_to_userID(first,compare),second)
+
+    def straightEnroll(self,command):
         club_name = []
         instructor = []
-        print("Club ID \t| Club name \t| Instructor")
+        print(f"{'Club ID':8} | {'Club name':30} | {'Instructor'}")
         with open('club_List','r') as f:
             clubs = f.read().split("\n")
             for i in range(len(clubs)):
                 club = clubs[i].split(":")
                 club_name.append(club[0])
                 instructor.append(club[2])
-                print(i,"\t| ",club[0],"\t| ",club[2])
-            command = int(input("which club would you like to enroll?"))
-            print("Enroll in " + club_name[command] +" by instructor: " + instructor[command])
+                print(f"{i:8} | {club[0]:30} | {club[2]}")
+            print("Request to Enroll in " + club_name[command] + " by instructor: " + instructor[command])
+            self.requestToCoach(instructor[command], club_name[command])
 
-    def coachMenu(self):
-        if self.getRole() != 'Coach':
-            print('You need to be the coach to access this menu')
-            return
+    def enroll(self):
+        club_name = []
+        instructor = []
+        print(f"{'Club ID':8} | {'Club name':30} | {'Instructor'}")
+        with open('club_List','r') as f:
+            clubs = f.read().split("\n")
+            for i in range(len(clubs)):
+                club = clubs[i].split(":")
+                club_name.append(club[0])
+                instructor.append(club[2])
+                print(f"{i:8} | {club[0]:30} | {club[2]}")
+            command = int(input("which club would you like to enroll? (number) "))
+            print("Request to Enroll in " + club_name[command] +" by instructor: " + instructor[command])
+            self.requestToCoach(instructor[command],club_name[command])
+
+    def requestToCoach(self,coach,club):
+        email = Email()
+        email.anEmail(self.getEmail(),self.type_to_type(3,2,coach),club,self.getUser())
+        email.sendEmail('email_db')
+
 
     def file_reset(self,refile):
         with open(refile, 'w') as f:
             f.write("")
             f.close()
 
+def testEnroll():
+    acc = UserAccount()
+    acc.login('isabel','alyssa')
+    acc.straightEnroll(3)
+    return
 
+def testViewmail():
+    acc = UserAccount()
+    acc.login('isabel','alyssa')
+    mailBox,mail_count = acc.print_Options()
+    acc.quickOptions("0",mailBox,mail_count)
 
+#testViewmail()
+#testEnroll()
