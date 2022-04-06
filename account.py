@@ -1,3 +1,5 @@
+from clubEmailRecord import Email
+
 class UserAccount(object):
 
     def __init__(self):
@@ -24,40 +26,8 @@ class UserAccount(object):
 
     def fetchMail(self,username):
         # Error, needs implement again or find a better solution
-        mail_Count = 0
-        mail_List = []
-        with open(self.mailbox,'r') as f:
-            mails = f.read().split("\n")
-            for mail in mails:
-                if mail != "" or mail != '':
-                    section = mail.split(":")
-                    if len(section) > 4:
-                        if username in section[1]:
-                            mail_Count += 1
-                            # Mail format: sender:title:body
-                            mail_List.append([section[0],section[2],section[3]])
-        if mail_Count > 0:
-            return mail_Count, mail_List
-        else:
-            return 0,0
-
-    def toMailServer(self,sender,receiver,header,content):
-        box = "\n" + sender + ":" + receiver + ":" + header + ":" + content
-        with open(self.mailbox,'a') as f:
-            f.write(box)
-        f.close()
-
-    def writeEmail(self):
-        content = ""
-        header = input("Email title:\n")
-        print("Write your email here, once done type 'EOF'")
-        msg = input("> ")
-        while (True):
-            if msg == 'eof' or msg == 'EOF':
-                break
-            content = content + "\n" + msg
-            msg = input("> ")
-        return header, content
+        mail = Email()
+        return mail.findMailsOf('email_db',username)
 
     def user_base_dump(self):
         print(f'{"Account":20} \t {"email":25} \t {"name":20} \t {"role":20} \t {"phone":20} \t {"address":20}')
@@ -78,44 +48,45 @@ class UserAccount(object):
         return
 
     def sendEmail(self):
+        email = Email()
         print("Sending email: ")
         if self.getRole() == 'Admin':
             print("0) View all accounts info")
         print("1) View all emails address can be sent")
-        print("2) Sending anyway")
+        print("2) Sending email")
         command = input("> ")
         if command == "0" and self.getRole() == 'Admin':
             self.user_base_dump()
         elif command == "1":
             self.allEmail()
         elif command == "2":
-            receiver = input("To: ")
-            header, content = self.writeEmail()
-            self.send(receiver,header,content)
+            email.setSender(self.getEmail())
+            email.compose()
         return
 
-    # Later I will make a check if user exist then sent.
-    def send(self,receiver,header,content):
-        return self.toMailServer(self.userID_to_Type(self.getUser(), 2), receiver, header,content)
-
     def coachAnnounce(self):
+        mail = Email()
         clubList = self.viewClub(self.getUser())
         if len(clubList) > 0:
             print("Available receiver:")
             for i in clubList:
                 print(i)
-        receiver = input("To: ")
-        content = self.writeEmail()
-        self.send(receiver,content)
+            print('\n')
+            mail.compose(self.getEmail())
+        else:
+            print("You haven't declare a club yet. No club to announce \nMaybe try to regist for a club?")
+            command = input('Press Enter to continue... ')
+        return
 
     def viewClub(self,username):
         clubList = []
         with open(self.club) as f:
             clubs = f.read().split("\n")
             for club in clubs:
-                each = club[1]
-                if each == username:
-                    clubList.append(each)
+                section = club.split(':')
+                name = section[1]
+                if name == username:
+                    clubList.append(section[0])
         return clubList
 
     def annouceToClub(self):
@@ -144,8 +115,9 @@ class UserAccount(object):
         return
 
     def print_Options(self):
-        mail_count, mailBox = self.fetchMail(self.getUser())
+        mailBox = self.fetchMail(self.getUser())
         print("Menu: ")
+        mail_count = len(mailBox)
         if mail_count > 0:
             print("You got ", mail_count, " mail")
             print("0) view Mailbox")
@@ -153,14 +125,6 @@ class UserAccount(object):
         print("2) Change email")
         print("3) Change phone number")
         print("4) Change name")
-
-    def listAllMember(self,type):
-        with open(self.userList,'r') as f:
-            users = f.read().split("\n")
-        members = [user for user in users if self.accountLookup(user,4) == type]
-        for i in members:
-            print(i)
-        return
 
     def admin_setUser(self):
         username = input('Which user would you like to change?')
@@ -178,8 +142,10 @@ class UserAccount(object):
             return self.admin_setUser()
 
     def adminOptions(self):
-        mail_count, mailBox = self.fetchMail(self.getUser())
+        mailBox = self.fetchMail(self.getName())
         print("Menu: ")
+        print(len(mailBox))
+        mail_count = len(mailBox)
         if mail_count > 0:
             print("You got ", mail_count, " mail")
             print("0) view Mailbox")
@@ -208,7 +174,8 @@ class UserAccount(object):
 
 
     def coachOptions(self):
-        mail_count, mailBox = self.fetchMail(self.getUser())
+        mailBox = self.fetchMail(self.getUser())
+        mail_count = len(mailBox)
         self.print_Options()
         print("5) Register a new club")
         print("6) Make an announcement")
@@ -239,7 +206,8 @@ class UserAccount(object):
         return self.coachOptions()
 
     def memberoptions(self):
-        mail_count, mailBox = self.fetchMail(self.getUser())
+        mailBox = self.fetchMail(self.getUser())
+        mail_count = len(mailBox)
         self.print_Options()
         print("5) Enroll in a club")
         print("6) Pay")
@@ -284,7 +252,6 @@ class UserAccount(object):
                 each = account.split(":")
                 if username == each[0]:
                     if passwd == each[1]:
-                        #print('Login successfully')
                         self.loginAs(username,passwd,each[2],each[3],each[4],each[5],each[6])
                         return self
                     else:
@@ -446,6 +413,15 @@ class UserAccount(object):
         print("Your Phone number: ", self.getPhone())
         print("Your current Address: ", self.getAddress())
 
+    def coachAddMember(self,club):
+        with open(self.club,'r') as f:
+            lines = f.read().split('\n')
+            for line in lines:
+                section = line.split(':')
+                if self.getUser() == section[1] and club == section[0]:
+                    return True
+        return False
+
     def addClub(self,club):
         with open('club_List','a') as f:
             f.write("\n"+club + ":" + self.getUser() + ":" + self.getName())
@@ -481,13 +457,6 @@ class UserAccount(object):
                 print(i,"\t| ",club[0],"\t| ",club[2])
             command = int(input("which club would you like to enroll?"))
             print("Enroll in " + club_name[command] +" by instructor: " + instructor[command])
-
-    def getMail(self):
-        with open('email_db','r') as f:
-            mails = f.read().split('\n')
-        for mail in mails:
-            pass
-        pass
 
     def coachMenu(self):
         if self.getRole() != 'Coach':

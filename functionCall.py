@@ -3,6 +3,7 @@
     This is just a user interaction python file.
 """
 from account import UserAccount
+
 class Function(object):
 
     def createAccount(self,role):
@@ -41,6 +42,16 @@ class Function(object):
         acc.options()
         return True
 
+    def userList(self,type):
+        print(f'{"Username":25}{"Password":25}\n')
+        with open('account_list','r') as f:
+            lines = f.read().split('\n')
+            for line in lines:
+                section = line.split(':')
+                if section[4] == type:
+                    print(f'{section[0]:25} {section[1]:25}')
+        print('\n')
+
     def menu(self):
         print("Welcome to MEM")
         print("1) Login")
@@ -49,6 +60,15 @@ class Function(object):
         if command == "1":
             return self.userSection()
         elif command == "2":
-            acc = UserAccount
+            acc = UserAccount()
             return acc.userRegist()
+        elif command == 'cl':
+            self.userList('Coach')
+            return self.menu()
+        elif command == 'ml':
+            self.userList('Member')
+            return self.menu()
+        else:
+            print('Invalid input')
+            return self.menu()
         return 0
