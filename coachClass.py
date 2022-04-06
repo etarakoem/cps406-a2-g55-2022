@@ -4,6 +4,16 @@ import textDatabase as td
 
 class Coach(UserAccount):
 
+    def coachAnnounceForTesting(self, mail = Email()):
+        clubList = self.viewClub(self.getUser())
+        for i in clubList:
+            name = self.getName().replace(" ","_")
+            club = i.replace(" ","_")
+            clubname = name+"_"+club
+            mail.anEmail(self.getEmail(),i,'Testing Email',f'Successfully send to {clubname}')
+            mail.sendEmail(clubname)
+        return
+
     def coachAnnounce(self):
         mail = Email()
         clubList = self.viewClub(self.getUser())
@@ -18,7 +28,8 @@ class Coach(UserAccount):
             command = input('Press Enter to continue... ')
         return
 
-    def quickOptions(self,command,mailBox,mail_count,email = Email()):
+    def quickOptions(self,command,email = Email()):
+        mailBox, mail_count = self.print_Options()
         if command == "0" and mail_count > 0:
             email.viewMailOptions(mailBox)
         elif command == "1":
@@ -43,16 +54,17 @@ class Coach(UserAccount):
             return self.options()
         return self.options()
     def options(self):
-        mailBox, mail_count = self.print_Options()
+        self.print_Options()
         print("5) Register a new club")
         print("6) Make an announcement")
         print("7) Send an email")
+        print("8) Add Member")
         command = input("What would you like to do today? ")
-        return self.quickOptions(command,mailBox,mail_count)
+        return self.quickOptions(command)
 
     def clubMailingGenerate(self,club):
         name = self.getName().replace(" ","_")
-        return f'{name}_{club}'
+        return f'{name}_{club.replace(" ","_")}'
 
     def addClub(self,club):
         club_mailing = self.clubMailingGenerate(club)
@@ -64,6 +76,8 @@ class Coach(UserAccount):
         td.textDB().createDB(club_mailing)
         return
 
+    def addMember(self):
+        pass
 
     def addMemberMailing(self,member,mailing):
         with open('memberMailingList','a') as f:
@@ -103,13 +117,15 @@ class Coach(UserAccount):
 def testCoachMenu():
     acc = Coach()
     acc.login('sarah','batman')
-    mailBox, mail_count = acc.print_Options()
-    acc.quickOptions('0',mailBox,mail_count)
+    acc.options()
+    #acc.quickOptions('0')
     #acc.options()
 #testCoachMenu()
 
 def testMakeClub():
     acc = Coach()
     acc.login('sarah','batman')
-    mailBox, mail_count = acc.print_Options()
-    acc.quickOptions()
+    #acc.quickOptions("5")
+    acc.coachAnnounceForTesting()
+
+#testMakeClub()

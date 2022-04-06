@@ -2,7 +2,6 @@ import textDatabase as td
 from datetime import date
 import os
 
-
 class Email:
     def __init__(self):
         self.receiver = ''
@@ -49,7 +48,7 @@ class Email:
         return
 
     def viewEmail(self):
-        print("{} \nFrom: {} \nTo: {} \nTitle: {} \n\n{}".format(self.getDate(),self.getSender(),self.getReceiver(),self.getHeader(),self.stripContent()))
+        print("{} \nFrom: {} \nTo: {} \nTitle: {} \n{}".format(self.getDate(),self.getSender(),self.getReceiver(),self.getHeader(),self.stripContent()))
 
     def toDB(self):
         return str(self.getDate()) + ":" + self.getSender()+ ":" +self.getReceiver()+ ":" +self.getHeader()+ ":" +self.getContent()+"\n"

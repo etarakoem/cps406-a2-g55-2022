@@ -104,7 +104,6 @@ class UserAccount(object):
         mailBox = email.findMailsOf('email_db', self.getEmail())
         mail_count = len(mailBox)
         print("Menu: ")
-        mail_count = len(mailBox)
         if mail_count > 0:
             print("You got ", mail_count, " mail")
             print("0) view Mailbox")
@@ -114,7 +113,8 @@ class UserAccount(object):
         print("4) Change name")
         return mailBox,mail_count
 
-    def quickOptions(self,command,mailBox,mail_count,email = Email()):
+    def quickOptions(self,command,email = Email()):
+        mailBox, mail_count = self.print_Options()
         if command == "0" and mail_count > 0:
             email.viewMailOptions(mailBox)
         elif command == "1":
@@ -135,14 +135,13 @@ class UserAccount(object):
         return self.options()
 
     def options(self,email = Email()):
-        mailBox = self.fetchMail(self.getUser())
-        mail_count = len(mailBox)
         self.print_Options()
         print("5) Enroll in a club")
         print("6) Pay")
         print("7) View unpaid club")
         print("")
         command = input("What would you like to do today? ")
+        return self.quickOptions(command)
 
 
     def login(self,username,passwd):
