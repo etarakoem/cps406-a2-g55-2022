@@ -162,4 +162,4 @@ def testMakeClub(email = Email()):
     acc.quickOptions("8",mailBox,mail_count)
     #acc.coachAnnounceForTesting()
 
-testMakeClub()
+#testMakeClub()
