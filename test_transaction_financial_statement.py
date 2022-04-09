@@ -1,5 +1,5 @@
 import datetime
-import simpleDatabase
+import simpleDatabase as sd
 import os
 
 class Transaction:
@@ -10,8 +10,6 @@ class Transaction:
         self.date = ""
         self.comment =""
         self.payee = ""
-   
-        
    
         
     def transaction(self,tType: str, amount: float, date: str, comment : str, payee: str):
@@ -44,6 +42,22 @@ class FinancialSatement:
         self.statementName = statementName
         self.companyName = companyName
         self.records = records
+    
+    def discount_members(self):
+        discountMembers = {}
+        names = [items[1] for items in self.records]
+        for name in names:
+            if name not in list(discountMembers.keys):
+                discountMembers[name] = 1
+            else:
+                discountMembers[name] += 1
+        quanlifiedMembers = []
+        keys = discountMembers.keys
+        for i in keys:
+            if discountMembers[i] >= 3:
+                quanlifiedMembers.add(i)
+        return quanlifiedMembers #send the discound email to the qualified members
+    
     
     def get_general_income_statement(self):
         expenses = {}
@@ -279,4 +293,4 @@ def main():
             
         choice = input("Would you like to enter another record? (y/n): ")
        
-main()
+#main()
