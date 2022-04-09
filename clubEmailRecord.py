@@ -102,6 +102,9 @@ class Email:
         db.openDB(box)
         db.insert(self.toDB())
 
+    def removeMail(self,content,box,db = td.textDB()):
+        db.openDB(box)
+        db.remove(content)
 
     def findMailsOf(self,box: str,receiver: str):
         db = td.textDB()
@@ -109,6 +112,35 @@ class Email:
         userBox = [mail for mail in mailBox if mail[2] == receiver]
         return userBox
 
+    def findMailWithContent(self,msg,box,receiver):
+        mailBox = self.findMailsOf(box,receiver)
+        return [mail for mail in mailBox if mail[4] == msg]
+
+
+    def subscriptionList(self,subscriber,box = 'memberMailingList'):
+        db = td.textDB()
+        sub = db.retrieve(box)
+        return [mail for mail in sub if mail[0] == subscriber]
+
+    def subscribe(self,receiver,clubmail,box = 'memberMailingList',db = td.textDB()):
+        db.openDB(box)
+        content = self.receiver_mailing(receiver,clubmail)
+        checkList = db.rawRetrieve(box,'member_enroll_club')
+        if content not in checkList:
+            db.insert(content)
+
+    def receiver_mailing(self,receiver,clubmail):
+        return f'{receiver}:{clubmail}'
+
+    def unsubscribe(self,receiver,mail,box = 'memberMailingList'):
+        db = td.textDB()
+        db.openDb(box)
+        db.remove(self.receiver_mailing(receiver,mail))
+
+    def countSubscribe(self,clubname,box = 'memberMailingList'):
+        db = td.textDB()
+        names = db.retrieve(clubname)
+        return len(set([name[0] for name in names]))
 
 def createEmailDB():
     db = td.textDB()

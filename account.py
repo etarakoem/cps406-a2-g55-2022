@@ -134,6 +134,10 @@ class UserAccount(object):
             return self.options()
         return self.options()
 
+    def checkSubscription(self,email = Email()):
+        mailList = email.findMailsOf('memberMailingList',self.getEmail())
+        print(mailList)
+
     def options(self,email = Email()):
         self.print_Options()
         print("5) Enroll in a club")
@@ -390,7 +394,7 @@ class UserAccount(object):
 
     def requestToCoach(self,coach,club):
         email = Email()
-        email.anEmail(self.getEmail(),self.type_to_type(3,2,coach),club,self.getUser())
+        email.anEmail(self.getEmail(),self.type_to_type(3,2,coach),club,'member_enroll_club')
         email.sendEmail('email_db')
 
 

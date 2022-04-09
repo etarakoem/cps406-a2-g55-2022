@@ -28,8 +28,7 @@ class Coach(UserAccount):
             command = input('Press Enter to continue... ')
         return
 
-    def quickOptions(self,command,email = Email()):
-        mailBox, mail_count = self.print_Options()
+    def quickOptions(self,command,mailBox,mail_count,email = Email()):
         if command == "0" and mail_count > 0:
             email.viewMailOptions(mailBox)
         elif command == "1":
@@ -47,20 +46,23 @@ class Coach(UserAccount):
             self.coachAnnounce()
         elif command == "7":
             self.sendEmail()
+        elif command == "8":
+            self.viewRequest()
         elif command == "q":
             return
         else:
             print("Invalid option, please try again")
             return self.options()
         return self.options()
+
     def options(self):
-        self.print_Options()
+        mailBox, mail_count = self.print_Options()
         print("5) Register a new club")
         print("6) Make an announcement")
         print("7) Send an email")
-        print("8) Add Member")
+        print('8) View Club Join request')
         command = input("What would you like to do today? ")
-        return self.quickOptions(command)
+        return self.quickOptions(command,mailBox,mail_count)
 
     def clubMailingGenerate(self,club):
         name = self.getName().replace(" ","_")
@@ -76,13 +78,40 @@ class Coach(UserAccount):
         td.textDB().createDB(club_mailing)
         return
 
-    def addMember(self):
-        pass
+    def approveAll(self,email = Email(),db = td.textDB()):
+        requestList = email.findMailWithContent('member_enroll_club', 'email_db', self.getEmail())
+        print(requestList)
+        for request in range(len(requestList)):
+            section = requestList[request]
+            self.addMemberMailing(section[1],self.clubMailingGenerate(section[3]))
+        #Cleaning after adding to memberMailingList
+        list = db.rawRetrieve('email_db','member_enroll_club')
+        for i in list:
+            #db.remove(i)
+            pass
+        return
 
-    def addMemberMailing(self,member,mailing):
-        with open('memberMailingList','a') as f:
-            f.write(f'{member}:{mailing}')
-            f.close()
+    def viewRequest(self,email = Email()):
+        requestList = email.findMailWithContent('member_enroll_club','email_db',self.getEmail())
+        print(f"{'ID':8} | {'Name':25} | {'Email contact':25} | {'Club Joining':25}")
+        for request in range(len(requestList)):
+            section = requestList[request]
+            print(f"{request:8} | {self.type_to_type(2,3,section[1]):25} | {section[1]:25} | {section[3]:25}")
+        self.addMemberOptions()
+
+    def addMemberOptions(self):
+        print('1) Approve all ')
+        print('2) Adding member manually')
+        command = input('> ')
+        if command == '1':
+            return self.approveAll()
+        else:
+            print('Invalid input')
+            return self.addMemberOptions()
+        #self.addMemberMailing()
+
+    def addMemberMailing(self,member,mailing,email = Email()):
+        email.subscribe(member,mailing)
 
     def checkAvailableClub(self,club):
         if club in self.viewClub(self.getUser()):
@@ -122,10 +151,15 @@ def testCoachMenu():
     #acc.options()
 #testCoachMenu()
 
-def testMakeClub():
+def testMakeClub(email = Email()):
     acc = Coach()
+    mem = UserAccount()
+    mem.login('kitty','meomeo')
+    mem.quickOptions("")
+    #mem.straightEnroll()
+    mailBox,mail_count = acc.print_Options()
     acc.login('sarah','batman')
-    #acc.quickOptions("5")
-    acc.coachAnnounceForTesting()
+    acc.quickOptions("8",mailBox,mail_count)
+    #acc.coachAnnounceForTesting()
 
-#testMakeClub()
+testMakeClub()
