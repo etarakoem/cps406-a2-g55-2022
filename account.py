@@ -1,4 +1,10 @@
+from pickle import TRUE
 from clubEmailRecord import Email
+
+# An's code
+import os
+import simpleDatabase as sd
+from checkPayment import PaymentHistory
 class UserAccount(object):
 
     def __init__(self):
@@ -13,6 +19,20 @@ class UserAccount(object):
         self.mailbox = "email_db"
         self.accountList = 'account_list'
         self.userList = 'user_list'
+        # An's code
+        self.paidMember = True
+
+    def setUnPaid(self):
+        self.paidMember = False
+
+    def setPaid(self):
+        self.paidMember = True
+    
+    def checkPay(self):
+        paidMemberList = PaymentHistory.getPaidMembers(self)
+        if self.getName() not in paidMemberList:
+            self.setUnPaid()
+        return self.paidMember
 
     def loginAs(self,username,passwd,email,name,role,phone,address):
         self.setName(name)
@@ -62,6 +82,45 @@ class UserAccount(object):
             email.setSender(self.getEmail())
             email.compose(self.getEmail())
         return
+    
+    # An's code
+    def getMemberList(self):
+        currentWorkingDir = os.getcwd() 
+        fileName = os.path.join(currentWorkingDir,"Transaction_Records.db")
+        fileName = fileName.replace("\\", '/')
+        db = sd.simpleDatabase()
+        db.createDatabase(fileName)
+        db.openDatabase(fileName)
+        colNames = ["TransactionNumber", "Payee","Amount","Date", "TransactionType", "Remark" ]
+        db.createTable("TransactionRecord",colNames,["Integer","String", "Double", "String", "String", "String"], ["TransactionNumber"])
+        membersList = db.getTableData("TransactionRecord")
+        return membersList
+
+    def getPaidMembers(self):
+        membersList = self.getMemberList()
+        paidMembers = []
+        i = 0
+        for item in membersList:
+            if item[2] > 0:
+                paidMembers.insert(i, item[1])
+                i += 1
+        print(paidMembers)
+        return paidMembers
+
+    def getUnpaidMembers(self):
+        membersList = self.getMemberList()
+        unPaidMembers = ""
+        i = 0
+        for item in membersList:
+            if item[2] == None:
+                unPaidMembers += item[1] + ", "
+                i += 1
+        if (len(unPaidMembers) == 0):
+            print("All members have paid already!")
+        else:
+            print(unPaidMembers)
+
+
 
     def viewClub(self,username):
         clubList = []
@@ -104,9 +163,12 @@ class UserAccount(object):
         mailBox = email.findMailsOf('email_db', self.getEmail())
         mail_count = len(mailBox)
         print("Menu: ")
-        if mail_count > 0:
-            print("You got ", mail_count, " mail")
-            print("0) view Mailbox")
+        
+        print("You got ", mail_count, " mail")
+        self.checkPay()
+        if self.paidMember == False:
+            print("s")
+        print("0) view Mailbox")
         print("1) Change password")
         print("2) Change email")
         print("3) Change phone number")
