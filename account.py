@@ -167,7 +167,7 @@ class UserAccount(object):
         print("You got ", mail_count, " mail")
         self.checkPay()
         if self.paidMember == False:
-            print("You need to pay your bills to continue with the club!")
+            print("s")
         print("0) view Mailbox")
         print("1) Change password")
         print("2) Change email")
