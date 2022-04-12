@@ -1,5 +1,5 @@
 import datetime
-import simpleDatabase
+import simpleDatabase as sd
 import os
 
 class Transaction:
@@ -80,7 +80,8 @@ class FinancialSatement:
             i = i + 1
         income_statement = income_statement + "\n\nTotal Expenses\t-----------------------------------------\t"\
             +str(self.get_total_expense() * -1) + "\n\nTotal Revenue\t-----------------------------------------  \t"\
-                +str(self.get_total_income() + self.get_total_expense())
+                +str(self.get_total_income() + self.get_total_expense()) + "\nTotal Accounts Payable\t---------------------------------  \t"\
+                    +str(self.get_total_accPayables()) + "\n"
             
         return income_statement
         
@@ -90,6 +91,13 @@ class FinancialSatement:
             if item[2] > 0: 
                 totalIncome = totalIncome + item[2]
         return totalIncome
+    
+    def get_total_accPayables(self):
+        totalAccPayables = 0
+        for item in self.records:
+            if item[2] > 0: 
+                totalAccPayables = totalAccPayables + item[2] - 10
+        return totalAccPayables
             
     def get_total_expense(self):
         totalExpense = 0
@@ -122,6 +130,24 @@ class FinancialSatement:
                 else :
                     monthlyIncome[keyMonth] = monthlyIncome[keyMonth] + item[2]
         return monthlyIncome
+
+    def get_monthly_accPayables(self):
+        
+        monthlyIncome = {}
+        for item in self.records:
+            dateRec = [int(i) for i in item[3].split("-")]
+            newDate = datetime.date(dateRec[0], dateRec[1], dateRec[2])
+            
+            month = newDate.month
+            keyMonth = self.__get_month_name(month)
+            
+            if item[2] > 0:
+                
+                if keyMonth not in list(monthlyIncome.keys()):
+                    monthlyIncome[keyMonth] = item[2] - 10
+                else :
+                    monthlyIncome[keyMonth] = monthlyIncome[keyMonth] + item[2] - 10
+        return monthlyIncome
     
     def get_monthly_expense(self):
         
@@ -146,6 +172,7 @@ class FinancialSatement:
         
         monthlyIncome = self.get_monthly_income()
         monthlyExpense = self.get_monthly_expense()
+        monthlyAccPayables = self.get_monthly_accPayables()
         
         income_statement = "\t\t\t\t\t\t"+self.companyName+ "\n"+"\t\t\t\t\tMonthly Income Statement\n\n\n"
         
@@ -153,6 +180,7 @@ class FinancialSatement:
         
         for key in incomeKey:
             income = monthlyIncome[key]
+            accPayables = monthlyAccPayables[key]
             expense = 0
             
             if key in list(monthlyExpense.keys()):
@@ -160,7 +188,7 @@ class FinancialSatement:
             
             income_statement = income_statement + key + "\n\t"+"Total Income\t--------------------\t"+str(income)+\
                 "\n\tTotal Expense\t--------------------\t"+str(expense)+"\n\n\tTotal Revenue\t--------------------\t"+\
-                    str(income - expense)+"\n\n"
+                    str(income - expense)+"\n\tTotal Accounts Payable\t------------\t"+str(accPayables)+"\n\n"
         return income_statement
                 
 
